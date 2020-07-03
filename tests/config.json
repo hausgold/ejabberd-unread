@@ -1,0 +1,42 @@
+{
+  "hostname": "jabber.local",
+  "jid": "admin@jabber.local",
+  "password": "defaultpw",
+  "transport": "websocket",
+  "wsURL": "ws://jabber.local/ws",
+  "match": "unread",
+  "skipUnrelated": false,
+  "debug": false,
+  "mucHostname": "conference.jabber.local",
+  "db": {
+    "user": "postgres",
+    "password": "postgres",
+    "host": "db",
+    "database": "jabber"
+  },
+  "users": {
+    "alice": "dbb4bc2c-3764-4e3b-bb87-e384d03b88c8",
+    "amy": "97cdf085-1c6a-4986-9733-5ee956cd9d8f",
+    "bob": "d151194d-c111-4242-bca3-d1057eb9b364",
+    "emma": "e2ccb515-56b8-4a9a-a148-f54a84d7a51d"
+  },
+  "rooms": {
+    "room1": ["alice", "amy", "bob"],
+    "room2": ["alice", "amy", "bob"],
+    "room6": ["alice", "amy", "bob"],
+    "room8": ["alice", "amy", "bob"]
+  },
+  "conversations": {
+    "conversation3": ["alice", "amy"],
+    "conversation4": ["alice", "bob"],
+    "conversation5": ["amy", "bob"],
+    "conversation7": ["amy", "emma"],
+    "conversation9": ["alice", "emma"]
+  },
+  "seeds": {
+    "alice": { "room1": 0, "room2": 0, "room6": 0, "room8": 0, "alice": 0, "amy": 0, "bob": 1, "emma": 3 },
+    "amy":   { "room1": 1, "room2": 0, "room6": 3, "room8": 3, "alice": 0, "amy": 0, "bob": 0, "emma": 3 },
+    "bob":   { "room1": 1, "room2": 0, "room6": 3, "room8": 3, "alice": 0, "amy": 1, "bob": 0, "emma": 0 },
+    "emma":  { "room1": 0, "room2": 0, "room6": 0, "room8": 0, "alice": 0, "amy": 0, "bob": 0, "emma": 0 }
+  }
+}

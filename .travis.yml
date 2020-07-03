@@ -1,0 +1,60 @@
+sudo: true
+dist: bionic
+
+cache:
+  directories:
+    - tests/node_modules
+
+stages:
+  # We want to build and test each and every branch.
+  - name: build
+  - name: test
+  # We just run the release stage, when we have a tag build.
+  - name: release
+    if: tag =~ .* AND type IN (push, api)
+
+jobs:
+  include:
+    - stage: build
+      install: skip
+      script:
+        # Reown the build workspace to the travis user (due to Docker,
+        # and caching)
+        - sudo chown travis:travis -R $PWD/..
+        # Build the ejabberd module
+        - make -C .travis build
+
+    - stage: test
+      install:
+        # Install docker-compose version 1.22.0
+        - sudo rm /usr/local/bin/docker-compose
+        - curl -L http://bit.ly/2B4msDT > docker-compose
+        - chmod +x docker-compose
+        - sudo mv docker-compose /usr/local/bin
+        # Fix some travis/2000 common/1000 user id mapping issues
+        - source .travis/exe/docker-glue
+        # Install the test suite dependencies
+        - make install
+      script:
+        - docker --version
+        - docker-compose --version
+        - START=background TEST_ENV=ci make start reload test
+
+    - stage: release
+      install: skip
+      script:
+        # Reown the build workspace to the travis user (due to Docker,
+        # and caching)
+        - sudo chown travis:travis -R $PWD/..
+        # Setup the module version environment variable for the release
+        - export MOD_VERSION=${TRAVIS_TAG}
+        - \[ -n "${MOD_VERSION}" \] || export MOD_VERSION=latest
+        # Build and package the ejabberd module
+        - make -C .travis build package
+      deploy:
+        provider: releases
+        api_key: ${GITHUB_AUTH_TOKEN}
+        file: .travis/ejabberd-unread-${MOD_VERSION}.tar.gz
+        skip_cleanup: true
+        on:
+          tags: true

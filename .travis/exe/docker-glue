@@ -1,0 +1,18 @@
+#!/bin/bash
+#
+# Add a new glue user with the uid 1000 and add him to the docker and travis
+# group. Then add the travis user to the glue group and reload the glue group
+# on the current shell session. Then re-own the whole build directory to the
+# glue user and group.
+#
+# @author Hermann Mayer <hermann.mayer92@gmail.com>
+
+# Setup the glue user
+sudo useradd -m -u 1000 -G travis,docker glue
+sudo usermod -aG glue travis
+
+# Reown the build workspace to the glue user
+sudo chown glue:travis -R $PWD/..
+
+# Ensure correct permissions on the SSH files
+sudo chmod 600 ~/.ssh/config

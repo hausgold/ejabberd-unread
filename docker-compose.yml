@@ -1,0 +1,25 @@
+version: "3"
+services:
+  db:
+    image: postgres:9.6
+    network_mode: bridge
+    volumes:
+      - ./config/postgres:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  jabber:
+    build: .
+    network_mode: bridge
+    extra_hosts:
+      - jabber.local:127.0.0.1
+    volumes:
+      - ./:/app
+      - ./:/opt/modules.d/sources/mod_unread
+      - ./config/ejabberd.yml:/etc/ejabberd/ejabberd.yml
+      - ./config/ejabberdctl.cfg:/etc/ejabberd/ejabberdctl.cfg
+    links:
+      - db
+    environment:
+      MDNS_HOSTNAME: jabber.local

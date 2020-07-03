@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# @author Hermann Mayer <hermann.mayer92@gmail.com>
+
+if [ -z "${COMPOSE}" ]; then
+  COMPOSE='docker-compose'
+fi
+
+# We wait and print the logs until we find this regex on the output
+STOP_TRIGGER='Executing command ejabberd_admin:register'
+
+# Save the current pid for bad times
+CURRENT_PID=$$
+
+# Read every line form the logs we follow
+${COMPOSE} logs -f --tail="all" | while read -t 30 LINE; do
+  # Proxy every line from the log to stdout
+  echo -e "${LINE}"
+  # Search for the stop trigger
+  if [ -n "`echo "${LINE}" | grep "${STOP_TRIGGER}"`" ]; then
+    echo
+    echo "# Start completed."
+    # We found our stop trigger, now we need to kill the
+    # logs we are following. This is hairy because of the
+    # BSD/GNU compatibility, so we drop every comfort and
+    # be POSIX only.
+    ps xao ppid,pid,command \
+      | sed 's/^\s\+//g' \
+      | grep "^${CURRENT_PID} " \
+      | grep "${COMPOSE} logs -f --tail" \
+      | awk '{print $2}' \
+      | xargs -n1 kill -9
+    # For safety reasons we die, too
+    exit 0
+  fi
+done

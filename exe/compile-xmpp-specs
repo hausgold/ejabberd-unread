@@ -1,0 +1,47 @@
+#!/bin/bash
+#
+# See: http://bit.ly/2LHKFoq
+# See: http://bit.ly/2M8sgNM
+set -e
+
+rm -rf tmp
+mkdir -p tmp
+cd tmp
+git clone https://github.com/processone/xmpp.git
+cd xmpp
+
+# See: http://bit.ly/2KrucQ0
+git checkout 1.2.2
+
+# make all
+make spec
+
+cat ../../specs/mod_unread.spec >> specs/xmpp_codec.spec
+cp include/xmpp_codec.hrl include/xmpp_codec.hrl.old
+
+make spec
+
+cp src/hg_unread.erl ../../src/hg_unread.erl
+sed -i 's/\t/  /g' ../../src/hg_unread.erl
+
+echo -e "%% This file was generated automatically by compile-xmpp-specs\n" \
+  > ../../include/hg_unread.hrl
+
+diff -n include/xmpp_codec.hrl.old include/xmpp_codec.hrl \
+  | grep -v "^\a" \
+  | grep -v "^\d" \
+  | grep -v "() |" \
+  | grep -v "() \." \
+  >> ../../include/hg_unread.hrl
+sed -i '/^$/N;/^\n$/D' ../../include/hg_unread.hrl
+sed -i '${/^$/d;}' ../../include/hg_unread.hrl
+
+chmod ugo+rw \
+  ../../include/hg_unread.hrl \
+  ../../src/hg_unread.erl
+
+chown 1000:1000 \
+  ../../include/hg_unread.hrl \
+  ../../src/hg_unread.erl
+
+chown 1000:1000 -R .

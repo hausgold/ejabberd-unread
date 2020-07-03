@@ -1,0 +1,26 @@
+diff --git a/src/mod_unread.erl b/src/mod_unread.erl
+index aeb4da8..2749a82 100644
+--- a/src/mod_unread.erl
++++ b/src/mod_unread.erl
+@@ -11,7 +11,7 @@
+ 
+ -include("ejabberd.hrl").
+ -include("logger.hrl").
+--include("xmpp.hrl").
++-include_lib("p1_xmpp/include/xmpp.hrl").
+ -include("mod_muc.hrl").
+ -include("mod_muc_room.hrl").
+ -include("hg_unread.hrl").
+diff --git a/src/mod_unread_sql.erl b/src/mod_unread_sql.erl
+index 44a2ca3..cb429a5 100644
+--- a/src/mod_unread_sql.erl
++++ b/src/mod_unread_sql.erl
+@@ -7,7 +7,7 @@
+ -include("mod_unread.hrl").
+ -include("ejabberd.hrl").
+ -include("logger.hrl").
+--include("xmpp.hrl").
++-include_lib("p1_xmpp/include/xmpp.hrl").
+ -include("ejabberd_sql_pt.hrl").
+ 
+ init(_Host, _Opts) ->
