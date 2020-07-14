@@ -9,7 +9,7 @@
 #
 # This script should be called like this:
 #
-#   $ curl -L 'http://bit.ly/2M5YEoo' | bash
+#   $ curl -L 'https://bit.ly/3esKfvM' | bash
 #
 # Used Ubuntu packages: wget
 #
