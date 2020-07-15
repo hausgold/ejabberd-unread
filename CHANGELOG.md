@@ -1,3 +1,9 @@
+## next
+
+* Corrected a module boot up configuration bug, we just fall back to the
+  original [mod_read_markers](https://github.com/hausgold/ejabberd-read-markers)
+  solution
+
 ## 1.0.0
 
 * Initial release of the ejabberd-unread (mod_unread) module

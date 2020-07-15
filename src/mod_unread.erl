@@ -41,8 +41,6 @@
 %% custom unread functionality.
 -spec start(binary(), gen_mod:opts()) -> ok.
 start(Host, Opts) ->
-  %% This is a dirty hack for the local/development usage of the module
-  p1_options:insert(ejabberd_db_modules, mod_unread, sql, true),
   %% Initialize the module options
   IQDisc = gen_mod:get_opt(iqdisc, Opts, gen_iq_handler:iqdisc(Host)),
   %% Initialize the database module
@@ -284,4 +282,6 @@ depends(_Host, _Opts) -> [{mod_mam, hard},
 
 mod_opt_type(db_type) -> fun(T) -> ejabberd_config:v_db(?MODULE, T) end;
 mod_opt_type(iqdisc) -> fun gen_iq_handler:check_type/1;
-mod_opt_type(_) -> [db_type, iqdisc].
+%% TODO: http://bit.ly/2LU3jto
+%% mod_opt_type(_) -> [db_type, iqdisc].
+mod_opt_type(_) -> [].
