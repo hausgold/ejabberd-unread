@@ -122,8 +122,7 @@ on_store_mam_message(#message{to = Conversation} = Packet,
   %% Add the current message as unread for all room members.
   lists:foreach(fun(User) -> store(User, Conversation, Packet) end,
                 affiliated_jids(Packet)),
-  %% Remove our custom meta data again
-  xmpp:del_meta(Packet, users);
+  Packet;
 on_store_mam_message(#message{from = Conversation, to = User} = Packet,
                      _LUser, _LServer, _Peer, chat, recv) ->
   store(User, Conversation, Packet);

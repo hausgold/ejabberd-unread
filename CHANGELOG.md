@@ -1,3 +1,8 @@
+## next
+
+* Do not remove the meta.user data from a MUC packet in order to not interfere
+  with other modules (eg. mod_mam2sidekiq)
+
 ## 1.0.1
 
 * Corrected a module boot up configuration bug, we just fall back to the
