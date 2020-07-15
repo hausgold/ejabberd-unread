@@ -1,2 +1,2 @@
--define(MODULE_VERSION, <<"1.0.0-437">>).
+-define(MODULE_VERSION, <<"1.0.1-437">>).
 -define(NS_UNREAD, <<"urn:xmpp:unread">>).

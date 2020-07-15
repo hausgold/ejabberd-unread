@@ -1,4 +1,4 @@
-## next
+## 1.0.1
 
 * Corrected a module boot up configuration bug, we just fall back to the
   original [mod_read_markers](https://github.com/hausgold/ejabberd-read-markers)
