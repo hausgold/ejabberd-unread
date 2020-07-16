@@ -74,8 +74,8 @@ require('./src/client')(require('./config'), (client) => {
           test.unreadMessagesConversation('amy', 'room6', 3),
           test.markAsRead('amy', 'room6', 404),
           test.unreadMessagesConversation('amy', 'room6', 3),
-          test.unreadMessages('amy', 10),
-          test.allUnreadMessages(22)
+          test.unreadMessages('amy', 11),
+          test.allUnreadMessages(26)
         ]),
 
         test.it('deletes no database row [4]', [
@@ -83,7 +83,7 @@ require('./src/client')(require('./config'), (client) => {
           test.markAsRead('alice', 'bob', 404),
           test.unreadMessagesConversation('alice', 'bob', 1),
           test.unreadMessages('alice', 4),
-          test.allUnreadMessages(22)
+          test.allUnreadMessages(26)
         ])
       ]),
 
@@ -92,8 +92,8 @@ require('./src/client')(require('./config'), (client) => {
           test.unreadMessagesConversation('amy', 'room1', 1),
           test.markAsRead('amy', 'room1', '$lastUnreadMessageId'),
           test.unreadMessagesConversation('amy', 'room1', 0),
-          test.unreadMessages('amy', 9),
-          test.allUnreadMessages(21)
+          test.unreadMessages('amy', 10),
+          test.allUnreadMessages(25)
         ]),
 
         test.it('only deletes one database row [4]', [
@@ -101,7 +101,7 @@ require('./src/client')(require('./config'), (client) => {
           test.markAsRead('alice', 'bob', '$lastUnreadMessageId'),
           test.unreadMessagesConversation('alice', 'bob', 0),
           test.unreadMessages('alice', 3),
-          test.allUnreadMessages(20)
+          test.allUnreadMessages(24)
         ])
       ])
     ]),
@@ -110,14 +110,14 @@ require('./src/client')(require('./config'), (client) => {
       test.context('without a matching user/conversation', [
         test.it('deletes no database row [2]', [
           test.markAllAsRead('amy', 'room2'),
-          test.unreadMessages('amy', 9),
-          test.allUnreadMessages(20)
+          test.unreadMessages('amy', 10),
+          test.allUnreadMessages(24)
         ]),
 
-        test.it('deletes no database row [3]', [
-          test.markAllAsRead('bob', 'emma'),
-          test.unreadMessages('bob', 8),
-          test.allUnreadMessages(20)
+        test.it('deletes no database row [12]', [
+          test.markAllAsRead('john', 'bob'),
+          test.unreadMessages('john', 1),
+          test.allUnreadMessages(24)
         ])
       ]),
 
@@ -126,16 +126,16 @@ require('./src/client')(require('./config'), (client) => {
           test.unreadMessagesConversation('amy', 'room6', 3),
           test.markAllAsRead('amy', 'room6'),
           test.unreadMessagesConversation('amy', 'room6', 0),
-          test.unreadMessages('amy', 6),
-          test.allUnreadMessages(17)
+          test.unreadMessages('amy', 7),
+          test.allUnreadMessages(21)
         ]),
 
         test.it('only deletes three database rows [7]', [
           test.unreadMessagesConversation('amy', 'emma', 3),
           test.markAllAsRead('amy', 'emma'),
           test.unreadMessagesConversation('amy', 'emma', 0),
-          test.unreadMessages('amy', 3),
-          test.allUnreadMessages(14)
+          test.unreadMessages('amy', 4),
+          test.allUnreadMessages(18)
         ])
       ])
     ]),
@@ -152,6 +152,20 @@ require('./src/client')(require('./config'), (client) => {
           test.expectMamHistory('alice', 'emma', {
             unread: 3, read: 0
           })
+        ]),
+
+        test.it('responds the full messages [10]', [
+          test.expectMamHistory('bob', 'room10', {
+            unread: 1, read: 0
+          }),
+          test.expectMamHistoryCustomStanza('bob', 'room10')
+        ]),
+
+        test.it('responds the full messages [11]', [
+          test.expectMamHistory('bob', 'emma', {
+            unread: 1, read: 0
+          }),
+          test.expectMamHistoryCustomStanza('bob', 'emma')
         ])
       ]),
 
@@ -185,6 +199,22 @@ require('./src/client')(require('./config'), (client) => {
           test.expectMamHistory('alice', 'emma', {
             unread: 0, read: 3
           })
+        ]),
+
+        test.it('responds the full messages [10]', [
+          test.markAllAsRead('bob', 'room10'),
+          test.expectMamHistory('bob', 'room10', {
+            unread: 0, read: 1
+          }),
+          test.expectMamHistoryCustomStanza('bob', 'room10')
+        ]),
+
+        test.it('responds the full messages [11]', [
+          test.markAllAsRead('bob', 'emma'),
+          test.expectMamHistory('bob', 'emma', {
+            unread: 0, read: 1
+          }),
+          test.expectMamHistoryCustomStanza('bob', 'emma')
         ])
       ])
     ])

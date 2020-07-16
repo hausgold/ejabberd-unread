@@ -77,5 +77,39 @@ module.exports = (client) => {
         'urn:xmpp:sid:0', 'stanza-id', 'id'
       )
     );
+
+    // We like custom stanzas - so we want the server to archive them!
+    // Therefore we extend the message definition to send the storage hint for
+    // MAM.
+    const StoreHint = jxt.define({
+      name: 'store',
+      element: 'store',
+      namespace: 'urn:xmpp:hints'
+    });
+    jxt.extend(Message, StoreHint);
+
+    // A deep custom stanza for validation
+    const Owner = jxt.define({
+      name: 'owner',
+      element: 'owner',
+      namespace: 'custom:stanza:ns7',
+      fields: {
+        id: jxt.utils.attribute('id'),
+        name: jxt.utils.text()
+      }
+    });
+
+    const CustomStanza = jxt.define({
+      name: 'customStanza',
+      element: 'very-custom-stanza',
+      namespace: 'custom:stanza:ns4',
+      fields: {
+        id: jxt.utils.attribute('id'),
+        message: jxt.utils.text(),
+        owner: jxt.utils.extension(Owner),
+      }
+    });
+
+    jxt.extend(Message, CustomStanza);
   });
 };

@@ -167,11 +167,11 @@ on_filter_packet(#message{from = From, to = To,
   %% Group chat (MUC) messages look like this
   #message{type = groupchat} = Decoded ->
     MessageId = get_stanza_id_from_els(Decoded#message.sub_els),
-    add_unread_to_mam_result(Packet, Decoded, MessageId, To, From);
+    add_unread_to_mam_result(Packet, El, MessageId, To, From);
   %% Single chat messages look a little bit different
   #message{type = normal, from = Conversation} = Decoded ->
     MessageId = get_stanza_id_from_els(Decoded#message.sub_els),
-    add_unread_to_mam_result(Packet, Decoded, MessageId, From, Conversation);
+    add_unread_to_mam_result(Packet, El, MessageId, From, Conversation);
   %% We ignore the decoded message due to the pattern matching above failed
   _ -> Packet
   %% The XML element decoding failed
@@ -186,21 +186,26 @@ on_filter_packet(Packet) -> Packet.
 %% of the database lookup as a new +unread+ element to the resulting message
 %% stanza which indicates the unread state of the message. The helper is used
 %% by the +on_filter_packet+ hook for single and group chat messages.
--spec add_unread_to_mam_result(stanza(), message(), jid(), jid(),
+-spec add_unread_to_mam_result(stanza(), xmlel(), jid(), jid(),
                                non_neg_integer()) -> stanza().
 add_unread_to_mam_result(#message{sub_els = [#mam_result{
                             sub_els = [#forwarded{} = Forwarded]
                           } = MamResult]} = Packet,
-                         #message{sub_els = Els} = Decoded, MessageId,
+                         #xmlel{} = Message,
+                         MessageId,
                          #jid{lserver = LServer} = User,
                          #jid{} = Conversation) ->
   %% Check the database for the message unread state
   Mod = gen_mod:db_mod(LServer, ?MODULE),
   Unread = Mod:is_unread(LServer, bare_jid(User),
                          bare_jid(Conversation), MessageId),
-  %% Replace the original MAM result with our extended version
-  NewMessage = Decoded#message{sub_els = Els ++ [Unread]},
-  NewForwarded = Forwarded#forwarded{xml_els = [xmpp:encode(NewMessage)]},
+  %% Replace the original MAM result with our extended version.
+  %% We have to use the original #xmlel message, because the parsed one (from
+  %% +xmpp:decode+) will lose all non-XMPP known elements, including all user
+  %% defined custom stanza elements. Therefore we fiddle directly with the
+  %% fast_xml module here to overcome the issue.
+  NewMessage = fxml:append_subtags(Message, [xmpp:encode(Unread)]),
+  NewForwarded = Forwarded#forwarded{xml_els = [NewMessage]},
   NewMamResult = MamResult#mam_result{sub_els = [NewForwarded]},
   Packet#message{sub_els = [NewMamResult]};
 %% Any non matching packet/parsed message combination will be passed through.

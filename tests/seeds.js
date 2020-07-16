@@ -6,6 +6,8 @@
 //   * [6] MUC with three users, 3 messages unread per user (sender has none)
 //   * [2] MUC with three users, without unread messages (sender has none)
 //   * [8] MUC with three users, 3 messages unread per user (sender has none)
+//   * [10] MUC with three users, one message (custom stanza) per
+//          user (sender has none)
 //
 //   * [3] direct chat between two users, no unread messages
 //   * [4] direct chat between two users
@@ -16,6 +18,10 @@
 //     -> three messages unread own perspective
 //   * [9] direct chat between two users
 //     -> three messages unread own perspective
+//   * [11] direct chat between two users
+//     -> one message (custom stanza) unread own perspective
+//   * [12] direct chat between two users
+//     -> one message unread own perspective
 
 const async = require('async');
 const createUsers = require('./lib/users');
@@ -53,7 +59,10 @@ require('./src/client')(require('./config'), (client) => {
           // Test case [8]
           (callback) => test.message('room8', callback),
           (callback) => test.message('room8', callback),
-          (callback) => test.message('room8', callback)
+          (callback) => test.message('room8', callback),
+
+          // Test case [10]
+          (callback) => test.customStanza('room10', callback)
         ], () => switchDone(() => callback(null, users)));
       });
     },
@@ -92,6 +101,20 @@ require('./src/client')(require('./config'), (client) => {
             }, () => switchDone(callback));
           });
         },
+
+        // [11] one messages unread own (bob) perspective ["bob", "emma"]
+        (callback) => {
+          test.switchUser('emma', (test, switchDone) => {
+            test.customStanza('bob', () => switchDone(callback));
+          });
+        },
+
+        // [12] one message unread peer (bob) perspective ["john", "emma"]
+        (callback) => {
+          test.switchUser('emma', (test, switchDone) => {
+            test.customStanza('john', () => switchDone(callback));
+          });
+        }
       ], callback);
     },
 
@@ -110,12 +133,13 @@ require('./src/client')(require('./config'), (client) => {
 
       async.series([
         // Check the overall count of unread messages rows
-        test.allUnreadMessages(22),
+        test.allUnreadMessages(26),
         // Check the unread messages of the users (all conversation wide)
         test.unreadMessages('alice', 4),
-        test.unreadMessages('amy', 10),
-        test.unreadMessages('bob', 8),
+        test.unreadMessages('amy', 11),
+        test.unreadMessages('bob', 10),
         test.unreadMessages('emma', 0),
+        test.unreadMessages('john', 1),
         // Check the unread messages of each user on a specific conversation
       ].concat(countChecks), callback);
     }

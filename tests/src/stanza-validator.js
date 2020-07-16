@@ -20,16 +20,19 @@ module.exports = (utils) => {
   };
 
   return {
-    message: (room, nick) => {
+    message: (room, nick, body = true) => {
       nick = nick || 'admin';
       return (xml, direction) => {
         if (direction !== 'response') { return; }
         const contains = (regex, message) => match(xml, regex, message);
         const missing = (regex, message) => matchMissing(xml, regex, message);
         const fullJid = `${room}/${nick}`;
+        const bodyCheck = body
+          ? '<body>.*</body>'
+          : '<very-custom-stanza .*</very-custom-stanza>';
 
         contains(
-          `<message .* from=['"]${fullJid}['"] .*<body>.*</body></message>`,
+          `<message .* from=['"]${fullJid}['"] .*${bodyCheck}</message>`,
           `Message response for ${room} failed.`
         );
       };

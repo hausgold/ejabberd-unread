@@ -1,3 +1,9 @@
+## next
+
+* Improved the MAM result manipulation to directly change the XML elements
+  instead of using the XMPP parsed variant, this will keep user defined
+  non-XMPP custom XML elements (stanzas) in place
+
 ## 1.0.3
 
 * Added a testing chat client to debug bugs and the implementation easily
