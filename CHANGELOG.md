@@ -1,4 +1,4 @@
-## next
+## 1.0.4
 
 * Improved the MAM result manipulation to directly change the XML elements
   instead of using the XMPP parsed variant, this will keep user defined
