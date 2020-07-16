@@ -5,7 +5,7 @@ const async = require('async');
 // Setup a new client and run the test suite
 require('./src/client')(require('./config'), (client) => {
   // Setup the test cases helpers
-  const test = require('./src/testcases')(client);
+  const test = require('./src/testcases')(client, true);
   const seeds = client.config.seeds;
 
   // Run all test cases

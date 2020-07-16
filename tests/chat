@@ -1,0 +1,353 @@
+#!/usr/bin/env node
+
+const moment = require('moment');
+const wrap = require('word-wrap');
+const colors = require('colors');
+const readline = require('readline');
+
+const cap = (str) => {
+  let parts = str.split('');
+  parts[0] = parts[0].toUpperCase();
+  return parts.join('');
+};
+
+const tag = {
+  misc: (str) => str.padStart(6, ' '),
+  client: () => tag.misc('Client').grey,
+  recv: (str) => tag.misc(cap(str)).red,
+  send: (str) => tag.misc(cap(str)).green,
+  room: (str) => tag.misc(str).magenta,
+  unread: (bool) => bool ? tag.misc('***'.yellow) : ''
+};
+
+let stopping = false;
+let config = require('./config');
+let [user, conversation] = process.argv.slice(2);
+
+if (!user || !conversation) {
+  console.log(`Usage: chat [USER] [CONVERSATION]
+
+    There are no options. You MUST use the local parts only for
+    the arguments. Eg. \`chat alice bob\` or \`chat alice room1\`.`);
+  return process.exit();
+}
+
+config.jid = `${user}@${config.hostname}`;
+let conversationJid = null;
+let conversationType = null;
+let conversationRaw = conversation;
+
+if (/^room/.test(conversation)) {
+  conversationJid = `${conversation}@${config.mucHostname}`;
+  conversationType = 'muc';
+  conversation = tag.misc(conversation).magenta;
+} else {
+  conversationJid = `${conversation}@${config.hostname}`;
+  conversationType = 'single';
+  conversation = tag.misc(conversation).blue;
+}
+
+require('./src/client')(config, (client) => {
+  const test = require('./src/testcases')(client, false);
+  const promptTag = '['.grey + tag.send(client.config.jid.local) +
+    '] '.grey + '>'.green + ' ';
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    prompt: `#                      ${promptTag}`
+  });
+
+  let shutdown = () => {
+    console.log();
+    log(tag.client(), 'Shutdown..');
+    rl.close()
+    client.disconnect();
+    setTimeout(() => process.exit(), 200);
+  };
+
+  let clear = (lines = 1) => {
+    console.log('\033[' + lines + 'A\033[80D');
+    console.log(Array(process.stdout.columns).join(' '));
+    console.log('\033[' + lines + 'A');
+  };
+
+  let coloredJid = (jid) => {
+    let local = jid.split('@')[0];
+    return (/^room/.test(jid)) ? local.magenta : local.blue;
+  };
+
+  let snip = () => {
+    client.utils.log(Array(process.stdout.columns - 1).join('-'), true, -1);
+  };
+
+  let log = (ftag, what, when = moment(), iwrap = false, unread) => {
+    when = when.format('YYYY/MM/DD mm:hh:ss')
+    unread = tag.unread(unread);
+    if (unread != '') { unread = ` ${unread}`; }
+    what = what.trim() + unread;
+    let pref = `(${when.grey})(${ftag}) `;
+    let empt = Array(pref.length - 17).join(' ');
+    pref = pref.replace(/\(/g, '['.grey).replace(/\)/g, ']'.grey);
+    let first = null;
+    if (iwrap) {
+      what = wrap(what, { indent: '', width: 70 });
+    }
+    what = what.split("\n");
+    first = what.shift();
+    first = `${pref}${first}`;
+    what = what.map((part) => `${empt}${part}`);
+    what.unshift(first);
+    client.utils.log(what.join("\n"), false, -1);
+  };
+
+  let send = (what) => {
+    let opts = { to: conversationJid, body: what };
+    if (conversationType == 'muc') { opts.type = 'groupchat'; }
+    client.sendMessage(opts);
+  };
+
+  let receiveMsg = (msg, unread) => {
+    let from = null;
+    let when = moment(msg.messageId / 1000);
+    let id = `-- ${msg.messageId}`.grey;
+    let body = '';
+
+    if (msg.body) {
+      body = msg.body;
+    } else {
+      body = '<custom stanza>'.yellow;
+    }
+    body += ` ${id}`;
+
+    if (msg.type == 'groupchat') {
+      from = msg.from.resource;
+    } else {
+      from = msg.from.local;
+    }
+
+    if (from == client.config.jid.local) {
+      from = tag.misc(cap(from)).green;
+    } else {
+      from = tag.recv(from);
+    }
+
+    log(from, body, when, ' ', msg.unread || unread);
+  };
+
+  let history = (callback) => {
+    snip();
+    let opts = { rsm: { max: 50, before: true } };
+    if (conversationType == 'muc') {
+      opts.jid = conversationJid;
+    } else {
+      opts.with = conversationJid;
+    }
+
+    client.searchHistory(opts, (err, res) => {
+      if (err) { return; }
+      res.mamResult.items.forEach((msg) => receiveMsg(msg.forwarded.message));
+      snip();
+      callback();
+    });
+  };
+
+  let help = () => {
+    clear(2);
+    console.log(`
+      Available commands for the current conversation (${conversation.trim()}):
+
+        e(x)it/quit               Shutdown the client session
+        (h)elp/commands           Print the following help
+
+        (d)ebug                   Toggle the debugging mode
+        (hi)story                 Re-fetch the history
+        mark-read/mr [ID]         Mark the given message (by id) as read
+        mark-all/ma               Mark all unread messages as read
+        (u)nread                  Fetch the unread message counts of
+                                  all conversations
+        unread-(p)eers            Fetch the first/oldest unread message of
+                                  the peers of this conversation
+    `);
+    rl.prompt();
+  };
+
+  let debug = () => {
+    clear(2);
+    test.debug();
+    let state = client.config.debug ? 'enabled'.green : 'disabled'.red;
+    log(tag.client(), `Toggle debug mode (now ${state})`);
+    client.utils.setMatcher(null, () => {});
+    rl.prompt();
+  };
+
+  // Setup a signal handler
+  process.on('SIGINT', () => {
+    stopping = stopping || 0;
+    stopping += 1;
+    if (stopping < 3) {
+      rl.write(null, { ctrl: true, name: 'u' });
+      return;
+    }
+    if (stopping > 3) { return; }
+    shutdown();
+  });
+
+  log(tag.client(), `Login as ${user.blue} and join ${conversation.magenta}`);
+  log(tag.client(), `Enter \`help\` for in-client commands`);
+
+  if (conversationType == 'muc') {
+    // Enter the given room
+    client.joinRoom(conversationJid, client.config.jid.local, {
+      history: false
+    });
+  }
+
+  // Fetch the history
+  log(tag.client(), `Fetch the history of ${conversation} (max 50)`);
+  history(() => {
+    // Setup the message listener
+    client.on('presence', (presence) => {
+      if (presence.type == 'available' && presence.muc) {
+        console.log();
+        clear(2);
+        let who = coloredJid(cap(presence.muc.jid.local));
+        log(tag.room(conversation), `${who} joined the room`);
+        snip();
+        return rl.prompt();
+      }
+
+      if (presence.type == 'unavailable' && presence.muc) {
+        console.log();
+        clear(2);
+        let who = coloredJid(cap(presence.muc.jid.local));
+        log(tag.room(conversation), `${who} left the room`);
+        snip();
+        return rl.prompt();
+      }
+    });
+
+    client.on('groupchat', (msg) => {
+      // Our own sent message, from a moment ago
+      if (msg.from.resource == client.config.jid.local) {
+        clear(2);
+        let id = `-- ${msg.messageId}`.grey;
+        log(
+          tag.misc(cap(client.config.jid.local)).green,
+          `${msg.body} ${id}`, moment(), ' ', false
+        );
+        return rl.prompt();
+      }
+
+      console.log();
+      clear(2);
+      receiveMsg(msg, true);
+      rl.prompt();
+    });
+
+    client.on('chat', (msg) => {
+      console.log();
+      clear(2);
+      receiveMsg(msg, true);
+      rl.prompt();
+    });
+
+    // Register an readline handler for each line the user enters,
+    // we send a message to the given conversation
+    rl.on('line', (line) => {
+      line = line.trim();
+
+      if (line == '') {
+        clear(2);
+        return rl.prompt(true);
+      }
+
+      if (/^(exit|quit|x)$/i.test(line)) {
+        return shutdown();
+      }
+
+      if (/^(help|h|commands)$/i.test(line)) {
+        return help();
+      }
+
+      if (/^(debug|d)$/i.test(line)) {
+        return debug();
+      }
+
+      if (/^(history|hi)$/i.test(line)) {
+        return history(() => {
+          rl.prompt();
+        });
+      }
+
+      if (/^(mark-read|mr)\s+.*$/i.test(line)) {
+        let id = line.match(/\s+(\d+)$/);
+        if (id && id[1]) {
+          clear(2);
+          snip();
+          client.config.testLevel = -1;
+          id = id[1];
+          return test.markAsRead(
+            client.config.jid.local, conversationRaw, id
+          )(() => { snip(); rl.prompt(); });
+        } else {
+          console.log('# Bad command.');
+          rl.prompt();
+          return;
+        }
+      }
+
+      if (/^(mark-all|ma)$/i.test(line)) {
+        clear(2);
+        snip();
+        client.config.testLevel = -1;
+        return test.markAllAsRead(
+          client.config.jid.local, conversationRaw
+        )(() => { snip(); rl.prompt(); });
+      }
+
+      if (/^(unread|u)$/i.test(line)) {
+        clear(2);
+        snip();
+        client.config.testLevel = -1;
+        return test.queryUnread((res) => {
+          console.log('#');
+          res = Object.keys(res).map((key) => { return [key, res[key]]; });
+          res.sort((a, b) => a[1] - b[1]).reverse().forEach((cur) => {
+            let count = `${cur[1]}`.padStart(4, ' ');
+            let ccon = coloredJid(cur[0]);
+            console.log(`#   ${count} at ${ccon}`);
+          });
+          console.log('#');
+          snip();
+          rl.prompt();
+        });
+      }
+
+      if (/^(unread-peers|p)$/i.test(line)) {
+        clear(2);
+        snip();
+        client.config.testLevel = -1;
+        return test.queryUnreadPeers(conversationRaw, (res) => {
+          console.log('#');
+          res = Object.keys(res).map((key) => { return [key, res[key]]; });
+          res.sort((a, b) => a[1] - b[1]).reverse().forEach((cur) => {
+            let ccon = coloredJid(cur[0]);
+            console.log(`#   ${cur[1]} is the first unread message of ${ccon}`);
+          });
+          console.log('#');
+          snip();
+          rl.prompt();
+        });
+      }
+
+      stopping = 0;
+      send(line);
+    });
+
+    // Setup an interval to ping the server
+    setInterval(() => { test.ping(); }, 30 * 1000);
+
+    // Start the first prompt
+    rl.prompt();
+  });
+});

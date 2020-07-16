@@ -24,7 +24,7 @@ const createRoom = require('./lib/rooms');
 // Setup a new client and run the test suite
 require('./src/client')(require('./config'), (client) => {
   // Setup the test cases helpers
-  const test = require('./src/testcases')(client);
+  const test = require('./src/testcases')(client, true);
 
   // Run all seeds
   async.waterfall([

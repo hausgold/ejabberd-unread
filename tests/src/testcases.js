@@ -2,11 +2,11 @@ const async = require('async');
 const faker = require('faker');
 const { Client } = require('pg');
 const setupClient = require('./client');
-
 const pg = new Client(require('../config').db);
-pg.connect();
 
-module.exports = testCases = (client) => {
+module.exports = testCases = (client, db = false) => {
+  if (db) { pg.connect(); }
+
   // Default message matcher
   const msgMatcher = (msg) => new RegExp(`<stanza-id .*${msg}`, 'g');
 
@@ -102,7 +102,7 @@ module.exports = testCases = (client) => {
     // Send a ping request to the server
     ping: (callback) => {
       self.client.ping(self.config.hostname, (err, res) => {
-        callback(null, res.to.bare);
+        callback && callback(null, res.to.bare);
       })
     },
 

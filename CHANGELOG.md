@@ -1,3 +1,9 @@
+## next
+
+* Added a testing chat client to debug bugs and the implementation easily
+* Corrected the MAM result matching and made it more robust to varying element
+  order
+
 ## 1.0.2
 
 * Do not remove the meta.user data from a MUC packet in order to not interfere

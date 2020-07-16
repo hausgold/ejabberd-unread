@@ -24,7 +24,7 @@ module.exports = (config) => {
 
     isRelevant: (xml, direction) => {
       // Stop further stanzas when we already had this one before
-      if (stanzas[config.match]) { return false; }
+      if (config.match && stanzas[config.match]) { return false; }
 
       // Try multiple matches based on the given data type
       match = false;
@@ -98,11 +98,12 @@ module.exports = (config) => {
       }
 
       let pre = Array(level + 1).join(' ');
+      if (pre != '') { pre += ' '; }
 
       if (multiple === true) {
-        console.log(`# ${pre}\n# ${pre} ${str}\n# ${pre}`);
+        console.log(`#${pre}\n#${pre} ${str}\n#${pre}`);
       } else {
-        console.log(`# ${pre} ${str}`);
+        console.log(`#${pre} ${str}`);
       }
     },
 

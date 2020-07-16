@@ -165,11 +165,12 @@ on_filter_packet(#message{from = From, to = To,
   %% Decode the original MAM message element again to extend it
   try xmpp:decode(El) of
   %% Group chat (MUC) messages look like this
-  #message{sub_els = [_, _, #stanza_id{id = MessageId}]} = Decoded ->
+  #message{type = groupchat} = Decoded ->
+    MessageId = get_stanza_id_from_els(Decoded#message.sub_els),
     add_unread_to_mam_result(Packet, Decoded, MessageId, To, From);
   %% Single chat messages look a little bit different
-  #message{from = Conversation,
-           sub_els = [_, #stanza_id{id = MessageId}]} = Decoded ->
+  #message{type = normal, from = Conversation} = Decoded ->
+    MessageId = get_stanza_id_from_els(Decoded#message.sub_els),
     add_unread_to_mam_result(Packet, Decoded, MessageId, From, Conversation);
   %% We ignore the decoded message due to the pattern matching above failed
   _ -> Packet
@@ -258,6 +259,16 @@ get_muc_users(StateData) ->
        (LJID, {member, _}, Acc) -> [jid:make(LJID)|Acc];
        (_, _, Acc) -> Acc
   end, [], StateData#state.affiliations).
+
+%% This is a simple helper function to search and extract the stanza id from a
+%% +stanza-id+ XML element (record version) out of a list of various records.
+%% Just like them occur on the MAM result inside the inner message XML element.
+-spec get_stanza_id_from_els([tuple()]) -> binary().
+get_stanza_id_from_els(Els) ->
+  case lists:keyfind(stanza_id, 1, Els) of
+  #stanza_id{id = Id} -> Id;
+  _ -> <<"0">>
+  end.
 
 %% Extract the stanza id from a message packet and convert it to a string.
 -spec get_stanza_id(stanza()) -> integer().
