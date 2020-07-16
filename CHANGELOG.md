@@ -1,4 +1,4 @@
-## next
+## 1.0.3
 
 * Added a testing chat client to debug bugs and the implementation easily
 * Corrected the MAM result matching and made it more robust to varying element
