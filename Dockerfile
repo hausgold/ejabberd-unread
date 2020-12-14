@@ -14,9 +14,9 @@ RUN rm -rf /var/lib/apt/lists/* && \
     fakeroot dpkg-dev libssl-dev libyaml-dev libgd-dev libwebp-dev && \
   echo 'en_US.UTF-8 UTF-8' >> /etc/locale.gen && /usr/sbin/locale-gen
 
-# Install nodejs 8
+# Install nodejs 14
 RUN rm -rf /var/lib/apt/lists/* && \
-  curl -sL https://deb.nodesource.com/setup_10.x | bash - && \
+  curl -sL https://deb.nodesource.com/setup_14.x | bash - && \
   apt-get install -y nodejs
 
 # Setup additional build dependencies for ejabberd/erlang
