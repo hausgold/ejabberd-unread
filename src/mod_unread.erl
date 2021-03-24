@@ -2,11 +2,11 @@
 -author("hermann.mayer92@gmail.com").
 -behaviour(gen_mod).
 -export([%% ejabberd module API
-         start/2, stop/1, reload/3, mod_opt_type/1, depends/2,
+         start/2, stop/1, reload/3, mod_opt_type/1, depends/2, mod_doc/0, mod_options/1,
          %% Helpers (database, packet handling)
-         store/3, drop/4, add_unread_to_mam_result/5,
+         store/3, add_unread_to_mam_result/5,
          %% Hooks
-         on_muc_filter_message/3, on_store_mam_message/6, on_filter_packet/1,
+         on_muc_filter_message/3, on_store_mam_message/7, on_filter_packet/1,
          %% IQ handlers
          on_iq/1
         ]).
@@ -27,8 +27,6 @@
   -> any().
 -callback store(binary(), binary(), binary(), non_neg_integer())
   -> ok | {error, any()}.
--callback drop(binary(), binary(), binary(), binary())
-  -> ok | {error, any()}.
 -callback count(binary(), binary())
   -> [#ur_unread_messages{}].
 -callback first_unread(binary(), binary())
@@ -42,9 +40,9 @@
 -spec start(binary(), gen_mod:opts()) -> ok.
 start(Host, Opts) ->
   %% Initialize the module options
-  IQDisc = gen_mod:get_opt(iqdisc, Opts, gen_iq_handler:iqdisc(Host)),
+  IQDisc = gen_mod:get_opt(iqdisc, Opts),
   %% Initialize the database module
-  Mod = gen_mod:db_mod(Host, Opts, ?MODULE),
+  Mod = gen_mod:db_mod(Host, ?MODULE),
   Mod:init(Host, Opts),
   %% Register the custom XMPP codec
   xmpp:register_codec(hg_unread),
@@ -97,7 +95,7 @@ reload(Host, NewOpts, OldOpts) ->
   end,
   ok.
 
-%% Unfortunately the mod_man +store_mam_message+ hook does not deliver the
+%% Unfortunately the mod_mam +store_mam_message+ hook does not deliver the
 %% state data structure of a groupchat message (MUC). We need to get all
 %% member/owner affiliations and put their respective JIDs on the packet meta
 %% as +users+ key. This will later be picked up by the regular
@@ -115,26 +113,33 @@ on_muc_filter_message(Acc, _MUCState, _FromNick) -> Acc.
 %% Hook on all MAM (message archive management) storage requests to grab the
 %% stanza packet and write it to the database. This is the core of this module
 %% and takes care of the unread message tracking per user.
--spec on_store_mam_message(message() | drop, binary(), binary(), jid(),
+-spec on_store_mam_message(message() | drop, binary(), binary(), jid(), binary(),
                            chat | groupchat, recv | send) -> message().
 on_store_mam_message(#message{to = Conversation} = Packet,
-                     _LUser, _LServer, _Peer, groupchat, recv) ->
+                     _LUser, _LServer, _Peer, _Nick, groupchat, recv) ->
   %% Add the current message as unread for all room members.
   lists:foreach(fun(User) -> store(User, Conversation, Packet) end,
                 affiliated_jids(Packet)),
   Packet;
 on_store_mam_message(#message{from = Conversation, to = User} = Packet,
                      _LUser, _LServer, _Peer, chat, recv) ->
-  store(User, Conversation, Packet);
-on_store_mam_message(Packet, _LUser, _LServer, _Peer, _Type, _Dir) -> Packet.
+%% I found that mucsub was causing duplicate messages to be saved, and I had to do this to filter dupes
+  case misc:is_mucsub_message(Packet) of
+    true -> ok;
+    _ -> store(User, Conversation, Packet)
+  end,
+  Packet;
+on_store_mam_message(Packet, _LUser, _LServer, _Peer, _Nick, _Type, _Dir) -> Packet.
 
 %% Handle all IQ packets from the user.
 -spec on_iq(iq()) -> iq().
 %% Handle a "mark all unread messages of a conversation" or a "mark a single
 %% message of a conversation as read" request.
-on_iq(#iq{type = set, from = UserJid,
+on_iq(#iq{type = set, from = #jid{lserver = LServer} = UserJid,
           sub_els = [#ur_ack{jid = ConversationJid, id = MessageId}]} = IQ) ->
-  drop(UserJid, ConversationJid, MessageId, IQ);
+  Mod = gen_mod:db_mod(LServer, ?MODULE),
+  Mod:drop(LServer, bare_jid(UserJid), bare_jid(ConversationJid), MessageId),
+  xmpp:make_iq_result(IQ);
 %% Handle a "list all unread counts of all conversations (own perspective)"
 %% request. The "own perspective" is the request sender.
 on_iq(#iq{type = get, from = #jid{lserver = LServer} = User,
@@ -160,7 +165,7 @@ on_iq(IQ) -> xmpp:make_error(IQ, xmpp:err_not_allowed()).
 -spec on_filter_packet(stanza()) -> stanza().
 on_filter_packet(#message{from = From, to = To,
                           sub_els = [#mam_result{sub_els = [#forwarded{
-                            xml_els = [#xmlel{name = <<"message">>} = El]
+                            sub_els = [#xmlel{name = <<"message">>} = El]
                           }]}]} = Packet) ->
   %% Decode the original MAM message element again to extend it
   try xmpp:decode(El) of
@@ -205,7 +210,7 @@ add_unread_to_mam_result(#message{sub_els = [#mam_result{
   %% defined custom stanza elements. Therefore we fiddle directly with the
   %% fast_xml module here to overcome the issue.
   NewMessage = fxml:append_subtags(Message, [xmpp:encode(Unread)]),
-  NewForwarded = Forwarded#forwarded{xml_els = [NewMessage]},
+  NewForwarded = Forwarded#forwarded{sub_els = [NewMessage]},
   NewMamResult = MamResult#mam_result{sub_els = [NewForwarded]},
   Packet#message{sub_els = [NewMamResult]};
 %% Any non matching packet/parsed message combination will be passed through.
@@ -247,8 +252,8 @@ affiliated_jids(#message{from = Sender} = Packet) ->
 %% JID representation for filtering.
 -spec admin_jids(binary()) -> [binary()].
 admin_jids(Server) ->
-  Jids = mnesia:dirty_select(acl, [
-   {{acl, {admin, Server}, {user, '$2'}}, [], ['$2']}
+  Jids = ets:select(acl, [
+   {{{admin,Server}, [{user,'$2'}]}, [], ['$2']}
   ]),
   lists:map(fun(Raw) ->
     bare_jid(jid:make(erlang:insert_element(3, Raw, <<"">>)))
@@ -257,7 +262,7 @@ admin_jids(Server) ->
 %% Extract all relevant users from the given MUC state (room).
 -spec get_muc_users(#state{}) -> [jid()].
 get_muc_users(StateData) ->
-  dict:fold(
+  maps:fold(
     fun(LJID, owner, Acc) -> [jid:make(LJID)|Acc];
        (LJID, member, Acc) -> [jid:make(LJID)|Acc];
        (LJID, {owner, _}, Acc) -> [jid:make(LJID)|Acc];
@@ -295,8 +300,13 @@ make_iq_result_els(#iq{from = From, to = To} = IQ, SubEls) ->
 depends(_Host, _Opts) -> [{mod_mam, hard},
                           {mod_muc, hard}].
 
-mod_opt_type(db_type) -> fun(T) -> ejabberd_config:v_db(?MODULE, T) end;
-mod_opt_type(iqdisc) -> fun gen_iq_handler:check_type/1;
-%% TODO: http://bit.ly/2LU3jto
-%% mod_opt_type(_) -> [db_type, iqdisc].
-mod_opt_type(_) -> [].
+%% Validate runtime options according to docs: https://docs.ejabberd.im/developer/guide/#validation
+mod_opt_type(db_type) -> econf:db_type(?MODULE);
+mod_opt_type(_) -> [db_type].
+
+%% Callback to provide known options and defaults
+mod_options(_Host) -> [   {db_type, <<"sql">>} ].
+
+%% Callback for documentation
+mod_doc() ->
+  #{desc => "This module allows users to acknowledge/retrieve their unread messages from direct chats and multi user conferences"}.
