@@ -11,7 +11,6 @@
          on_iq/1
         ]).
 
--include("ejabberd.hrl").
 -include("logger.hrl").
 -include("xmpp.hrl").
 -include("mod_muc.hrl").
@@ -122,7 +121,7 @@ on_store_mam_message(#message{to = Conversation} = Packet,
                 affiliated_jids(Packet)),
   Packet;
 on_store_mam_message(#message{from = Conversation, to = User} = Packet,
-                     _LUser, _LServer, _Peer, chat, recv) ->
+                     _LUser, _LServer, _Peer, _Nick, chat, recv) ->
 %% I found that mucsub was causing duplicate messages to be saved, and I had to do this to filter dupes
   case misc:is_mucsub_message(Packet) of
     true -> ok;
@@ -225,14 +224,6 @@ store(#jid{lserver = LServer} = User, #jid{} = Conversation, Packet) ->
             get_stanza_id(Packet)),
   Packet.
 
-%% This function deletes on or all unread message(s) of a user/conversation
-%% combination. The database adapter takes care of the one/all handling.
--spec drop(jid(), jid(), binary(), iq()) -> iq().
-drop(#jid{lserver = LServer} = User, #jid{} = Conversation, Id, IQ) ->
-  Mod = gen_mod:db_mod(LServer, ?MODULE),
-  Mod:drop(LServer, bare_jid(User), bare_jid(Conversation), Id),
-  xmpp:make_iq_result(IQ).
-
 %% Extract all relevant JIDs of all affiliated members. This will drop the
 %% packet sender, and any admin users.
 -spec affiliated_jids(#message{}) -> [jid()].
@@ -305,7 +296,7 @@ mod_opt_type(db_type) -> econf:db_type(?MODULE);
 mod_opt_type(_) -> [db_type].
 
 %% Callback to provide known options and defaults
-mod_options(_Host) -> [   {db_type, <<"sql">>} ].
+mod_options(_Host) -> [ {db_type, <<"sql">>} ].
 
 %% Callback for documentation
 mod_doc() ->
