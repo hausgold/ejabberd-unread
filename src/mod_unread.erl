@@ -38,8 +38,6 @@
 %% custom unread functionality.
 -spec start(binary(), gen_mod:opts()) -> ok.
 start(Host, Opts) ->
-  %% Initialize the module options
-  IQDisc = gen_mod:get_opt(iqdisc, Opts),
   %% Initialize the database module
   Mod = gen_mod:db_mod(Host, ?MODULE),
   Mod:init(Host, Opts),
@@ -58,7 +56,7 @@ start(Host, Opts) ->
                      ?MODULE, on_filter_packet, 50),
   %% Register IQ handlers
   gen_iq_handler:add_iq_handler(ejabberd_local, Host, ?NS_UNREAD,
-                                ?MODULE, on_iq, IQDisc),
+                                ?MODULE, on_iq, one_queue),
   %% Log the boot up
   ?INFO_MSG("[UR] Start ejabberd-unread (v~s) for ~s", [?MODULE_VERSION, Host]),
   ok.
