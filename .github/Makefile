@@ -60,7 +60,7 @@ build:
 	# Setup a build environment
 	@$(DOCKER) build -t $(MODULE):build .
 	@$(DOCKER) run --rm -v $(shell pwd)/..:/build $(MODULE):build bash -c \
-		'make -C /build/.travis build-module'
+		'make -C /build/.github build-module'
 
 build-module: clean install .find-deps
 	# Build $(MODULE) module from source

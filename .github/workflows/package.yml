@@ -1,0 +1,33 @@
+name: Package
+on:
+  release:
+    types: [published]
+
+concurrency:
+  group: '${{ github.event_name }}'
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Build the module package
+    runs-on: ubuntu-20.04
+    timeout-minutes: 10
+    steps:
+      - name: Prepare the virtual environment
+        uses: hausgold/actions/ci@master
+        with:
+          clone_token: '${{ secrets.CLONE_TOKEN }}'
+          settings: '${{ github.repository }}'
+          target: ci/docker
+      - uses: actions/checkout@v2
+
+      - name: Configure the module version
+        run: var MOD_VERSION ${APP_REF}
+
+      - name: Build the module
+        run: make -C .github build package
+
+      - name: Upload built module package
+        run: >
+          release-asset '${{ github.event.release.id }}'
+          ".github/ejabberd-unread-${MOD_VERSION}.tar.gz"

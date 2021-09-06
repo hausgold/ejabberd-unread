@@ -1,6 +1,6 @@
 ![ejabberd-unread](doc/assets/project.svg)
 
-[![Build Status](https://api.travis-ci.com/hausgold/ejabberd-unread.svg?token=4XcyqxxmkyBSSV3wWRt7&branch=master)](https://travis-ci.com/hausgold/ejabberd-unread)
+[![Test](https://github.com/hausgold/ejabberd-unread/actions/workflows/test.yml/badge.svg)](https://github.com/hausgold/ejabberd-unread/actions/workflows/test.yml)
 
 This is a custom [ejabberd](https://www.ejabberd.im/) module which allows users
 to acknowledge/retrieve their unread messages from direct chats and multi user
