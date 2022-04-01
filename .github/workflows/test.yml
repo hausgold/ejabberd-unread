@@ -1,0 +1,50 @@
+name: Test
+on:
+  push:
+    branches:
+      - '**'
+  schedule:
+    - cron: '0 0 * * MON'
+
+concurrency:
+  group: '${{ github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test the module
+    runs-on: ubuntu-20.04
+    timeout-minutes: 5
+    steps:
+      - name: Prepare the virtual environment
+        uses: hausgold/actions/ci@master
+        with:
+          clone_token: '${{ secrets.CLONE_TOKEN }}'
+          settings: '${{ github.repository }}'
+          target: ci/docker
+      - uses: actions/checkout@v2
+
+      - name: Install the module dependencies
+        run: make install
+
+      - name: Start the module dependencies
+        run: START=background make start reload
+
+      - name: Run the module tests
+        run: make test
+
+  build:
+    name: Build the module
+    runs-on: ubuntu-20.04
+    timeout-minutes: 5
+    steps:
+      - name: Prepare the virtual environment
+        uses: hausgold/actions/ci@master
+        with:
+          clone_token: '${{ secrets.CLONE_TOKEN }}'
+          settings: '${{ github.repository }}'
+          target: ci/docker
+      - uses: actions/checkout@v2
+
+      - name: Build the module
+        run: make -C .github build
