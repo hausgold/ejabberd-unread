@@ -1,10 +1,12 @@
 -module(mod_unread_sql).
 -author("hermann.mayer92@gmail.com").
+-behaviour(mod_unread).
 -compile([{parse_transform, ejabberd_sql_pt}]).
 -export([init/2, is_unread/4, store/4, drop/4, count/2, first_unread/2]).
 
 -include("hg_unread.hrl").
 -include("mod_unread.hrl").
+-include("ejabberd.hrl").
 -include("logger.hrl").
 -include("xmpp.hrl").
 -include("ejabberd_sql_pt.hrl").

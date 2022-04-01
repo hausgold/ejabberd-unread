@@ -2,9 +2,9 @@
 -author("hermann.mayer92@gmail.com").
 -behaviour(gen_mod).
 -export([%% ejabberd module API
-         start/2, stop/1, reload/3, mod_opt_type/1, depends/2, mod_doc/0, mod_options/1,
+         start/2, stop/1, reload/3, mod_doc/0, mod_opt_type/1, mod_options/1, depends/2,
          %% Helpers (database, packet handling)
-         store/3, add_unread_to_mam_result/5,
+         store/3, drop/4, add_unread_to_mam_result/5,
          %% Hooks
          on_muc_filter_message/3, on_store_mam_message/7, on_filter_packet/1,
          %% IQ handlers
@@ -25,6 +25,8 @@
 -callback stop(binary())
   -> any().
 -callback store(binary(), binary(), binary(), non_neg_integer())
+  -> ok | {error, any()}.
+-callback drop(binary(), binary(), binary(), binary())
   -> ok | {error, any()}.
 -callback count(binary(), binary())
   -> [#ur_unread_messages{}].
@@ -56,7 +58,7 @@ start(Host, Opts) ->
                      ?MODULE, on_filter_packet, 50),
   %% Register IQ handlers
   gen_iq_handler:add_iq_handler(ejabberd_local, Host, ?NS_UNREAD,
-                                ?MODULE, on_iq, one_queue),
+                                ?MODULE, on_iq),
   %% Log the boot up
   ?INFO_MSG("[UR] Start ejabberd-unread (v~s) for ~s", [?MODULE_VERSION, Host]),
   ok.
@@ -92,7 +94,7 @@ reload(Host, NewOpts, OldOpts) ->
   end,
   ok.
 
-%% Unfortunately the mod_mam +store_mam_message+ hook does not deliver the
+%% Unfortunately the mod_man +store_mam_message+ hook does not deliver the
 %% state data structure of a groupchat message (MUC). We need to get all
 %% member/owner affiliations and put their respective JIDs on the packet meta
 %% as +users+ key. This will later be picked up by the regular
@@ -120,23 +122,16 @@ on_store_mam_message(#message{to = Conversation} = Packet,
   Packet;
 on_store_mam_message(#message{from = Conversation, to = User} = Packet,
                      _LUser, _LServer, _Peer, _Nick, chat, recv) ->
-%% I found that mucsub was causing duplicate messages to be saved, and I had to do this to filter dupes
-  case misc:is_mucsub_message(Packet) of
-    true -> ok;
-    _ -> store(User, Conversation, Packet)
-  end,
-  Packet;
+  store(User, Conversation, Packet);
 on_store_mam_message(Packet, _LUser, _LServer, _Peer, _Nick, _Type, _Dir) -> Packet.
 
 %% Handle all IQ packets from the user.
 -spec on_iq(iq()) -> iq().
 %% Handle a "mark all unread messages of a conversation" or a "mark a single
 %% message of a conversation as read" request.
-on_iq(#iq{type = set, from = #jid{lserver = LServer} = UserJid,
+on_iq(#iq{type = set, from = UserJid,
           sub_els = [#ur_ack{jid = ConversationJid, id = MessageId}]} = IQ) ->
-  Mod = gen_mod:db_mod(LServer, ?MODULE),
-  Mod:drop(LServer, bare_jid(UserJid), bare_jid(ConversationJid), MessageId),
-  xmpp:make_iq_result(IQ);
+  drop(UserJid, ConversationJid, MessageId, IQ);
 %% Handle a "list all unread counts of all conversations (own perspective)"
 %% request. The "own perspective" is the request sender.
 on_iq(#iq{type = get, from = #jid{lserver = LServer} = User,
@@ -222,6 +217,14 @@ store(#jid{lserver = LServer} = User, #jid{} = Conversation, Packet) ->
             get_stanza_id(Packet)),
   Packet.
 
+%% This function deletes on or all unread message(s) of a user/conversation
+%% combination. The database adapter takes care of the one/all handling.
+-spec drop(jid(), jid(), binary(), iq()) -> iq().
+drop(#jid{lserver = LServer} = User, #jid{} = Conversation, Id, IQ) ->
+  Mod = gen_mod:db_mod(LServer, ?MODULE),
+  Mod:drop(LServer, bare_jid(User), bare_jid(Conversation), Id),
+  xmpp:make_iq_result(IQ).
+
 %% Extract all relevant JIDs of all affiliated members. This will drop the
 %% packet sender, and any admin users.
 -spec affiliated_jids(#message{}) -> [jid()].
@@ -241,9 +244,7 @@ affiliated_jids(#message{from = Sender} = Packet) ->
 %% JID representation for filtering.
 -spec admin_jids(binary()) -> [binary()].
 admin_jids(Server) ->
-  Jids = ets:select(acl, [
-   {{{admin,Server}, [{user,'$2'}]}, [], ['$2']}
-  ]),
+  Jids = ets:select(acl, [{ {{admin,Server}, [{user,'$2'}]}, [], ['$2'] }]),
   lists:map(fun(Raw) ->
     bare_jid(jid:make(erlang:insert_element(3, Raw, <<"">>)))
   end, Jids).
@@ -294,8 +295,10 @@ mod_opt_type(db_type) -> econf:db_type(?MODULE);
 mod_opt_type(_) -> [db_type].
 
 %% Callback to provide known options and defaults
-mod_options(_Host) -> [ {db_type, <<"sql">>} ].
+mod_options(_Host) ->
+    [   {db_type, <<"sql">>} ].
 
 %% Callback for documentation
 mod_doc() ->
   #{desc => "This module allows users to acknowledge/retrieve their unread messages from direct chats and multi user conferences"}.
+
