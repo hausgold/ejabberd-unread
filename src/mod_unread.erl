@@ -11,14 +11,12 @@
          on_iq/1
         ]).
 
--define(MODULE_VERSION, <<"1.1-472">>).
--define(NS_UNREAD, <<"urn:xmpp:unread">>).
-
 -include("logger.hrl").
 -include("xmpp.hrl").
 -include("mod_muc.hrl").
 -include("mod_muc_room.hrl").
 -include("hg_unread.hrl").
+-include("mod_unread.hrl").
 
 -callback init(binary(), gen_mod:opts())
   -> ok | {ok, pid()}.
