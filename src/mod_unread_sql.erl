@@ -88,7 +88,7 @@ first_unread(LServer, ConversationJid) ->
   Query = ?SQL("SELECT DISTINCT "
                "@(user_jid)s, "
                "@(message_id)d "
-               "@(conversation_jid)d "
+               "@(conversation_jid)s "
                "FROM unread_messages "
                "WHERE conversation_jid = %(ConversationJid)s "
                "ORDER BY user_jid, message_id ASC"),
