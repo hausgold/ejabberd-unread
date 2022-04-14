@@ -11,6 +11,9 @@
          on_iq/1
         ]).
 
+-define(MODULE_VERSION, <<"1.0.4-472">>).
+-define(NS_UNREAD, <<"urn:xmpp:unread">>).
+
 -include("logger.hrl").
 -include("xmpp.hrl").
 -include("mod_muc.hrl").
