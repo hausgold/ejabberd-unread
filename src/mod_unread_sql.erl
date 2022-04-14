@@ -6,7 +6,6 @@
 
 -include("hg_unread.hrl").
 -include("mod_unread.hrl").
--include("ejabberd.hrl").
 -include("logger.hrl").
 -include("xmpp.hrl").
 -include("ejabberd_sql_pt.hrl").
