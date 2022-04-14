@@ -94,8 +94,8 @@ first_unread(LServer, ConversationJid) ->
                "ORDER BY user_jid, message_id ASC"),
   case ejabberd_sql:sql_query(LServer, Query) of
     {selected, Messages} ->
-      [#ur_unread_message{jid = User, id = MessageId}
-        || {User, MessageId} <- Messages];
+      [#ur_unread_message{jid = User, ConversationId = ConversationId, id = MessageId}
+        || {User, ConversationId, MessageId} <- Messages];
     {'EXIT', _} -> [];
     _ -> []
   end.
