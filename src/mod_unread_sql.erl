@@ -86,16 +86,16 @@ count(LServer, UserJid) ->
 -spec first_unread(binary(), binary()) -> [#ur_unread_message{}].
 first_unread(LServer, ConversationJid) ->
   Query = ?SQL("SELECT DISTINCT "
-               "@(user_jid)s, "
+              %  "@(user_jid)s, "
+               "@(conversation_jid)s, "
                "@(message_id)d "
-               "@(conversation_jid)s "
                "FROM unread_messages "
                "WHERE conversation_jid = %(ConversationJid)s "
                "ORDER BY user_jid, message_id ASC"),
   case ejabberd_sql:sql_query(LServer, Query) of
     {selected, Messages} ->
-      [#ur_unread_message{jid = User, id = MessageId, ConversationId = ConversationId,}
-        || {User, MessageId, ConversationId} <- Messages];
+      [#ur_unread_message{jid = User, id = MessageId}
+        || {User, MessageId} <- Messages];
     {'EXIT', _} -> [];
     _ -> []
   end.
