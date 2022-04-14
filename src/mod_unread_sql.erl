@@ -85,7 +85,7 @@ count(LServer, UserJid) ->
 %% the given conversation. See https://bit.ly/3gOr40S for SQL details.
 -spec first_unread(binary(), binary()) -> [#ur_unread_message{}].
 first_unread(LServer, ConversationJid) ->
-  Query = ?SQL("SELECT DISTINCT ON (user_jid) "
+  Query = ?SQL("SELECT DISTINCT "
                "@(user_jid)s, "
                "@(message_id)d "
                "FROM unread_messages "
