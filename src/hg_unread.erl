@@ -118,7 +118,7 @@ decode_ur_unread_message(__TopXMLNS, __Opts,
        {xmlel, <<"unread-message">>, _attrs, _els}) ->
     {Jid, Id} = decode_ur_unread_message_attrs(__TopXMLNS,
                  _attrs, undefined, undefined),
-    {ur_unread_message, Jid, Id}.
+    {ur_unread_message, Jid, Id, ConversationId}.
 
 decode_ur_unread_message_attrs(__TopXMLNS,
              [{<<"jid">>, _val} | _attrs], _Jid, Id) ->
@@ -137,7 +137,7 @@ decode_ur_unread_message_attrs(__TopXMLNS, [], Jid,
     {decode_ur_unread_message_attr_jid(__TopXMLNS, Jid),
      decode_ur_unread_message_attr_id(__TopXMLNS, Id)}.
 
-encode_ur_unread_message({ur_unread_message, Jid, Id},
+encode_ur_unread_message({ur_unread_message, Jid, Id, ConversationId},
        __TopXMLNS) ->
     __NewTopXMLNS =
   xmpp_codec:choose_top_xmlns(<<"urn:xmpp:unread">>, [],
