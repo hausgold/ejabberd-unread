@@ -1,7 +1,7 @@
 version: "3"
 services:
   db:
-    image: postgres:9.6
+    image: postgres:13.7
     network_mode: bridge
     volumes:
       - ./config/postgres:/docker-entrypoint-initdb.d
