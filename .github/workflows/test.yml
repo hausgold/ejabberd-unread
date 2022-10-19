@@ -22,7 +22,7 @@ jobs:
           clone_token: '${{ secrets.CLONE_TOKEN }}'
           settings: '${{ github.repository }}'
           target: ci/docker
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install the module dependencies
         run: make install
@@ -44,7 +44,7 @@ jobs:
           clone_token: '${{ secrets.CLONE_TOKEN }}'
           settings: '${{ github.repository }}'
           target: ci/docker
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Build the module
         run: make -C .github build
