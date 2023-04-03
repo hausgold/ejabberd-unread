@@ -17,6 +17,7 @@ jobs:
         uses: hausgold/actions/ci@master
         with:
           clone_token: '${{ secrets.CLONE_TOKEN }}'
+          settings_secret_key: '${{ secrets.SETTINGS_SECRET_KEY }}'
           settings: '${{ github.repository }}'
           target: ci/docker
       - uses: actions/checkout@v3
