@@ -23,7 +23,7 @@ jobs:
           settings_secret_key: '${{ secrets.SETTINGS_SECRET_KEY }}'
           settings: '${{ github.repository }}'
           target: ci/docker
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install the module dependencies
         run: make install
@@ -46,7 +46,7 @@ jobs:
           settings_secret_key: '${{ secrets.SETTINGS_SECRET_KEY }}'
           settings: '${{ github.repository }}'
           target: ci/docker
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build the module
         run: make -C .github build

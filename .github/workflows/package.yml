@@ -20,7 +20,7 @@ jobs:
           settings_secret_key: '${{ secrets.SETTINGS_SECRET_KEY }}'
           settings: '${{ github.repository }}'
           target: ci/docker
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Configure the module version
         run: var MOD_VERSION ${APP_REF}
