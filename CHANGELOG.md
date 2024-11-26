@@ -3,6 +3,7 @@
 * Migrated from Travis CI to Github Actions (#6)
 * Upgraded to PostgreSQL 15.2 and Redis 7.0 (#17)
 * Upgraded PostgreSQL to 16.4 (#19)
+* Upgraded PostgreSQL to 16.6 (#20)
 
 ## 1.0.4
 
