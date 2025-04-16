@@ -1,5 +1,5 @@
 FROM hausgold/ejabberd:18.01
-MAINTAINER Hermann Mayer <hermann.mayer@hausgold.de>
+LABEL org.opencontainers.image.authors="containers@hausgold.de"
 
 # Install custom supervisord units
 COPY config/supervisor/* /etc/supervisor/conf.d/
