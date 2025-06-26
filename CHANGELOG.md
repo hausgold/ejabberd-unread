@@ -7,6 +7,7 @@
 * Upgraded PostgreSQL to 17.2 (#21)
 * Upgraded PostgreSQL to 17.4 (#22)
 * Upgraded PostgreSQL to 17.5 (#23)
+* Upgraded to node.js 22 (#24)
 
 ## 1.0.4
 
