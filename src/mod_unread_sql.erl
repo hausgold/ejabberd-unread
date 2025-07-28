@@ -5,8 +5,6 @@
 -export([init/2, is_unread/4, store/4, drop/4, count/2, first_unread/2]).
 
 -include("hg_unread.hrl").
--include("mod_unread.hrl").
--include("ejabberd.hrl").
 -include("logger.hrl").
 -include("xmpp.hrl").
 -include("ejabberd_sql_pt.hrl").
@@ -87,7 +85,7 @@ count(LServer, UserJid) ->
 %% the given conversation. See https://bit.ly/3gOr40S for SQL details.
 -spec first_unread(binary(), binary()) -> [#ur_unread_message{}].
 first_unread(LServer, ConversationJid) ->
-  Query = ?SQL("SELECT DISTINCT ON (user_jid) "
+  Query = ?SQL("SELECT DISTINCT "
                "@(user_jid)s, "
                "@(message_id)d "
                "FROM unread_messages "
