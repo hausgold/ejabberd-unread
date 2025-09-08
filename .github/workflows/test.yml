@@ -14,7 +14,7 @@ jobs:
   test:
     name: Test the module
     runs-on: ubuntu-22.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Prepare the virtual environment
         uses: hausgold/actions/ci@master
