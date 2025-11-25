@@ -8,6 +8,7 @@
 * Upgraded PostgreSQL to 17.4 (#22)
 * Upgraded PostgreSQL to 17.5 (#23)
 * Upgraded PostgreSQL to 17.6 (#25)
+* Upgraded PostgreSQL to 18.1 (#31)
 
 ## 1.0.4
 
