@@ -1,4 +1,5 @@
 FROM ubuntu:bionic
+COPY sources.list /etc/apt/sources.list
 RUN \
   sed -i 's/# deb-src/deb-src/g' /etc/apt/sources.list \
   && apt-get update \
