@@ -26,7 +26,7 @@ module.exports = (xml, indentation = '') => {
     return line;
   }).join("\n");
 
-  // Correct possition of ending tags (>, />)
+  // Correct position of ending tags (>, />)
   formatted = formatted.replace(/(['"])\s*>/g, '$1>');
   formatted = formatted.replace(/(['"])\s*\/>/g, '$1/>');
   formatted = formatted.replace(/\/>/g, ' />');

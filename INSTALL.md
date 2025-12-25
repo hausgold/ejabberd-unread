@@ -10,7 +10,7 @@
 Take care of the mod_unread module configuration on you ejabberd config,
 otherwise the module won't be started on your instance and you cannot use the
 features. The second important note is the database migration. Execute the SQL
-statement on your database which was bundled on the binary relase package.
+statement on your database which was bundled on the binary release package.
 
 ## Manual installation
 

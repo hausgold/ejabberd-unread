@@ -108,7 +108,7 @@ per conversation by a simple iq stanza.
 5. Bob retrieve the last read message of John and Alice
 
     Bob is actively looking at the history of the chat room and waits for
-    an anwer. His App MAY query the last read message of John and Alice on
+    an answer. His App MAY query the last read message of John and Alice on
     this room periodically to show an indicator that the message was read
     by all members. The XMPP server SHALL allow the querying of the last
     read message of another member of a room.
@@ -378,7 +378,7 @@ user. An example result looks like this:
 The module SHALL be written in pure Erlang.  See the [ejabberd
 module development
 guide](https://docs.ejabberd.im/developer/extending-ejabberd/modules/) for
-futher details.  See the [`ejabberd_sql`
+further details.  See the [`ejabberd_sql`
 library](https://github.com/processone/ejabberd-contrib/issues/227#issuecomment-328638111)
 for details on interacting with the SQL database.
 

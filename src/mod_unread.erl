@@ -153,7 +153,7 @@ on_iq(#iq{type = get, from = #jid{lserver = LServer},
 %% Handle all unmatched IQs.
 on_iq(IQ) -> xmpp:make_error(IQ, xmpp:err_not_allowed()).
 
-%% This hook is called everytime a new packet should be sent to a user
+%% This hook is called every time a new packet should be sent to a user
 %% (receiver), no matter of a group (MUC) or direct chat. When the packet
 %% contains a MAM result, we extend it with the unread element based on the
 %% database state.
