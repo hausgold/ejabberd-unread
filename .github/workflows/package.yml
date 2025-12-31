@@ -13,14 +13,13 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
-      - name: Prepare the virtual environment
-        uses: hausgold/actions/ci@master
+      - name: Prepare the environment
+        uses: hausgold/actions/ci@v2
         with:
           clone_token: '${{ secrets.CLONE_TOKEN }}'
           settings_secret_key: '${{ secrets.SETTINGS_SECRET_KEY }}'
           settings: '${{ github.repository }}'
           target: ci/docker
-      - uses: actions/checkout@v4
 
       - name: Configure the module version
         run: var MOD_VERSION ${APP_REF}
