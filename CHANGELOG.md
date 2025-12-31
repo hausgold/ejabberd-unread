@@ -1,6 +1,9 @@
 ## next
 
-* Migrated from Travis CI to Github Actions (#6)
+* TODO: Replace this bullet point with an actual description of a change.
+
+## 1.2.0
+
 * Upgraded to PostgreSQL 15.2 and Redis 7.0 (#17)
 * Upgraded PostgreSQL to 16.4 (#19)
 * Upgraded PostgreSQL to 16.6 (#20)
@@ -9,6 +12,10 @@
 * Upgraded PostgreSQL to 17.5 (#23)
 * Upgraded PostgreSQL to 17.6 (#25)
 * Upgraded PostgreSQL to 18.1 (#31)
+
+## 1.1.0
+
+* Migrated from Travis CI to Github Actions (#6)
 
 ## 1.0.4
 
