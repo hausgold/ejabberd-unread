@@ -1,5 +1,9 @@
 ## next
 
+* TODO: Replace this bullet point with an actual description of a change.
+
+## 1.2.1
+
 * Upgraded to Ubuntu 24.04 on Github Actions (#34)
 
 ## 1.2.0
