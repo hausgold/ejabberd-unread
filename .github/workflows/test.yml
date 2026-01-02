@@ -13,7 +13,7 @@ concurrency:
 jobs:
   test:
     name: Test the module
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Prepare the environment
@@ -35,7 +35,7 @@ jobs:
 
   build:
     name: Build the module
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Prepare the environment
