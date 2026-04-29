@@ -1,5 +1,9 @@
 ## next
 
+* TODO: Replace this bullet point with an actual description of a change.
+
+### 1.5.0
+
 * Upgraded to node.js 25 (#37)
 * Upgraded the test suite to stanza.io 10.3 (#37)
 
