@@ -6,10 +6,6 @@ export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
-_GEM_PATHS=$(ls -d1 ${HOME}/.gem/ruby/*/bin 2>/dev/null | paste -sd ':')
-_APP_PATHS=$(ls -d1 /app/vendor/bundle/ruby/*/bin 2>/dev/null | paste -sd ':')
-
-export PATH="${_GEM_PATHS}:${_APP_PATHS}:${PATH}"
 export PATH="/app/node_modules/.bin:${HOME}/.bin:/app/bin:${PATH}"
 
 if [ "${MDNS_STACK}" = 'true' ]; then

@@ -245,7 +245,7 @@ test: reload-database test-specs
 
 test-specs: .test
 	# Run the test suite
-	@$(call run-shell,$(NODE) tests/index.js)
+	@$(call run-shell,FORCE_COLOR=1 $(NODE) tests/index.js)
 
 restart:
 	# Restart the application
@@ -305,7 +305,7 @@ clean-database: .database
 
 reload-database: clean-database .test
 	# Load all testing seeds
-	@$(call run-shell,$(NODE) tests/seeds.js)
+	@$(call run-shell,FORCE_COLOR=1 $(NODE) tests/seeds.js)
 
 clean-vendors:
 	# Clean vendors

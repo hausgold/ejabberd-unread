@@ -20,7 +20,7 @@
     "moment": "^2.27.0",
     "pg": "^8.2.2",
     "request": "^2.87.0",
-    "stanza.io": "^9.1.0",
+    "stanza.io": "^10.3.4",
     "vkbeautify": "^0.99.3",
     "word-wrap": "^1.2.3",
     "xml-formatter": "^1.0.1"

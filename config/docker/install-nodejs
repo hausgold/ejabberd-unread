@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+# This script installs a modern Node.js on Ubuntu 18.04 by bypassing the system
+# glibc. Ubuntu 18.04 ships glibc 2.27, while recent Node.js versions require
+# ≥ 2.28, making official binaries and standard builds incompatible. To work
+# around this, it installs a musl-linked Node.js build together with a minimal
+# Alpine Linux runtime (musl, libstdc++, libgcc) and runs Node using Alpine’s
+# musl loader and libraries. This effectively provides a self-contained musl
+# environment alongside the host system. The setup is not officially
+# supported, may break native npm modules due to ABI differences, and requires
+# manual maintenance.
+
+# Any non-zero exit code will break
+set -e
+set -o pipefail
+
+export NODE_VERSION=v25.9.0
+export NODE_ARCH=linux-x64-musl
+export ALPINE_VER=v3.20
+export ALPINE_ARCH=x86_64
+
+# Install some helper utilities
+apt update
+apt install -y curl xz-utils ca-certificates file
+
+# Install the Alpine Linux musl environment
+function alpine-pkg-url()
+{
+  CACHE="/tmp/alpine-${ALPINE_VER}-${ALPINE_ARCH}.pkglist"
+
+  if [ ! -f "${CACHE}" ]; then
+    URL='https://dl-cdn.alpinelinux.org/alpine'
+    URL+="/${ALPINE_VER}/main/${ALPINE_ARCH}/"
+    curl -s "${URL}" > "${CACHE}"
+  fi
+
+  FILE="$(cat "${CACHE}" | grep -oP "${1}-\d[^\"]*\.apk" | sort -V | tail -n1)"
+
+  URL='https://dl-cdn.alpinelinux.org/alpine'
+  URL+="/${ALPINE_VER}/main/${ALPINE_ARCH}/${FILE}"
+  echo "${URL}"
+}
+export -f alpine-pkg-url
+
+function alpine-pkg()
+{
+  cd /tmp
+
+  DEST='/opt/alpine'
+  mkdir -p "${DEST}"
+
+  curl --fail -sL "$(alpine-pkg-url "${1}")" \
+    | tar xfz - --strip-components=1 -C "${DEST}" \
+    >/dev/null 2>&1
+}
+export -f alpine-pkg
+
+alpine-pkg 'libstdc\+\+'
+alpine-pkg 'libgcc'
+alpine-pkg 'musl'
+
+# Install nodejs (musl-build)
+NODE_URL='https://unofficial-builds.nodejs.org/download/release'
+NODE_URL+="/${NODE_VERSION}/node-${NODE_VERSION}-${NODE_ARCH}.tar.xz"
+curl --fail -sL "${NODE_URL}" | tar xfJ - --strip-components=1 -C /usr
+
+# Install a node wrapper
+mv /usr/bin/node /usr/bin/node.original
+cat >/usr/bin/node <<'EOF'
+#!/usr/bin/env sh
+
+exec /opt/alpine/ld-musl-x86_64.so.1 \
+  --library-path /opt/alpine/lib \
+  /usr/bin/node.original "$@"
+EOF
+chmod +x /usr/bin/node
+
+# Cleanup
+rm -rf /tmp/*

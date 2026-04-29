@@ -4,7 +4,7 @@ LABEL org.opencontainers.image.authors="containers@hausgold.de"
 # Install custom supervisord units
 COPY config/supervisor/* /etc/supervisor/conf.d/
 
-# Install system packages and the ruby bundles
+# Install system packages
 RUN rm -rf /var/lib/apt/lists/* && \
   sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list && \
   apt-get update -yqqq && \
@@ -14,15 +14,15 @@ RUN rm -rf /var/lib/apt/lists/* && \
     fakeroot dpkg-dev libssl-dev libyaml-dev libgd-dev libwebp-dev && \
   echo 'en_US.UTF-8 UTF-8' >> /etc/locale.gen && /usr/sbin/locale-gen
 
-# Install nodejs 16
-RUN rm -rf /var/lib/apt/lists/* && \
-  curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
-  apt-get install -y nodejs
+# Install nodejs
+COPY config/docker/install-nodejs /tmp/
+RUN /tmp/install-nodejs
 
 # Setup additional build dependencies for ejabberd/erlang
 RUN cd /tmp && \
   apt-get source ejabberd && \
-  apt-get build-dep -y ejabberd
+  apt-get build-dep -y ejabberd && \
+  rm -rf /var/lib/apt/lists/*
 
 # Setup the runtime directories for ejabberd
 RUN mkdir /run/ejabberd && chmod ugo+rwx /run/ejabberd
